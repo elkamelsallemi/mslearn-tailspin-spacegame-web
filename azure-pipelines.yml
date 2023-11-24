@@ -1,11 +1,12 @@
 trigger:
 - '*'
 
-pool: 
+pool:
   name: Default
 
 variables:
   buildConfiguration: 'Release'
+  nodeVersion: '14'  # Specify a Node.js version that is known to work well with your project
 
 steps:
 - task: UseDotNet@2
@@ -14,15 +15,21 @@ steps:
     packageType: sdk
     version: '6.x'
 
-- task: Npm@1
-  displayName: 'Run npm install'
+- task: NodeTool@0
   inputs:
-    verbose: false
+    versionSpec: '$(nodeVersion)'
+    checkLatest: true
+    addToPath: true
+  displayName: 'Install Node.js'
+
+- script: npm install
+  displayName: 'Run npm install'
+  workingDirectory: Tailspin.SpaceGame.Web  # Adjust the working directory to where your package.json is located
 
 - script: './node_modules/.bin/node-sass Tailspin.SpaceGame.Web/wwwroot --output Tailspin.SpaceGame.Web/wwwroot'
   displayName: 'Compile Sass assets'
 
-- task: gulp@1
+- script: 'npx gulp'  # Use npx to run gulp tasks
   displayName: 'Run gulp tasks'
 
 - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
@@ -41,3 +48,4 @@ steps:
     command: 'build'
     arguments: '--no-restore --configuration Release'
     projects: '**/*.csproj'
+
